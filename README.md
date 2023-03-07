@@ -1,6 +1,6 @@
 # finger_pos
 
-Simple library to ..............
+This module is a C++ program that reads video frames from multiple cameras and detects blobs (groups of pixels with similar color or intensity) using OpenCV library functions. It uses trackbars to set thresholds for the HSV values and displays the frames with the detected blobs. It also records the video frames from the cameras and saves them as images. The program uses the LSL (Lab Streaming Layer) C library to stream the detected blob data.
 
 # Building source code
 

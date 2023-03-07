@@ -1,0 +1,12 @@
+[submodule "lib/com_client"]
+	path = lib/com_client
+	url = git@github.com:Aightech/com_client
+	branch = main
+[submodule "lib/built_lsl"]
+	path = lib/built_lsl
+	url = git@github.com:Aightech/built_lsl
+	branch = main
+[submodule "lib/camera"]
+	path = lib/camera
+	url = git@github.com:Aightech/camera
+	branch = main
