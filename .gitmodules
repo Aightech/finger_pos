@@ -6,3 +6,7 @@
 	path = lib/camera
 	url = git@github.com:Aightech/camera
 	branch = main
+[submodule "lib/built_lsl"]
+	path = lib/built_lsl
+	url = git@github.com:Aightech/built_lsl
+	branch = main
