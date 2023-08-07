@@ -5,14 +5,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+//setprecision
+#include <iomanip>
 
 using namespace cv;
 const int max_value_H = 360 / 2;
 const int max_value = 255;
-int low_H = 4, low_S = 92, low_V = 190;
-int high_H = 25, high_S = 195, high_V = 255;
-int dilate_size = 2;
+int low_H = 107, low_S = 114, low_V = 106;
+int high_H = 153, high_S = 255, high_V = 220;
+int dilate_size = 9;
 std::string win_name = "Win";
+int border = 60;
 
 static void
 on_low_H_thresh_trackbar(int, void *)
@@ -59,6 +62,10 @@ get_keypoints(Mat &frame, std::vector<cv::KeyPoint> &keypoints)
     cv::cvtColor(frame, hsv, cv::COLOR_BGR2HSV);
     cv::inRange(hsv, cv::Scalar(low_H, low_S, low_V),
                 cv::Scalar(high_H, high_S, high_V), thresh);
+    //remove border
+    cv::rectangle(thresh, cv::Point(0, 0),
+                  cv::Point(thresh.cols - 1, thresh.rows - 1),
+                  cv::Scalar(0, 0, 0), border);
     cv::dilate(thresh, dilated,
                cv::getStructuringElement(cv::MORPH_ELLIPSE,
                                          cv::Size(dilate_size, dilate_size)));
@@ -120,20 +127,21 @@ main(int argc, char **argv)
     for(int j = 0; j < n; j++)
     {
         cameras.get_cam(j)->set_resolution(640, 480);
-        cameras.get_cam(j)->set_wrap("wrap"+std::to_string(j)+".xml");
+        cameras.get_cam(j)->set_wrap("wrap" + std::to_string(j) + ".xml");
     }
 
-    int nb_ch = 2*n;
+    int nb_ch = 3 * n;
     float data[nb_ch];
     lsl_streaminfo info = lsl_create_streaminfo("positions", "positions", nb_ch,
                                                 0, cft_float32, "camerasuid");
     lsl_outlet outlet = lsl_create_outlet(info, 0, 360);
     for(;;)
     {
-        std::cout << "\xd                                                                             \xd";
+        std::cout << "\xd                                                      "
+                     "                       \xd";
         for(int j = 0; j < n; j++)
         {
-            frame[j] = cameras.getFrame(j,true);
+            frame[j] = cameras.getFrame(j, true);
             std::vector<cv::KeyPoint> keypoints;
             keypoints.push_back(cv::KeyPoint(-1, -1, 20));
             get_keypoints(frame[j], keypoints);
@@ -144,17 +152,33 @@ main(int argc, char **argv)
                           cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
             cv::imshow("cam" + std::to_string(j), im_with_keypoints);
 
-            //send to client
-            
-            data[j * 2] = keypoints[0].pt.x / frame[j].cols;
-            data[j * 2 + 1] = keypoints[0].pt.y / frame[j].rows;
-            std::cout << data[j * 2] << "\t\t" << data[j * 2 + 1] << "\t\t";
+            //check if 2 keypoints are detected with max distance of 100px
+            if(keypoints.size() > 1)
+            {
+                double dx = keypoints[0].pt.x - keypoints[1].pt.x;
+                double dy = keypoints[0].pt.y - keypoints[1].pt.y;
+                double dist = sqrt(dx * dx + dy * dy);
+                double angle = atan2(dy, dx) * 180 / M_PI;
+                if(dist < 60)
+                {
+                    //send to client
+                    data[j * 2] = (keypoints[0].pt.x - border) /
+                                  (frame[j].cols - border * 2);
+                    data[j * 2 + 1] = (keypoints[0].pt.y - border) /
+                                      (frame[j].rows - border * 2);
+                    //print with 3 decimals
+                    std::cout << std::fixed << std::setprecision(3);
+                    std::cout << data[j * 2] << "\t\t" << data[j * 2 + 1]
+                              << "\t\t" << angle << "\t\t" << dist << std::endl;
+                }
+            }
         }
         cv::imshow(win_name, inverted);
         std::cout << std::flush;
         lsl_push_sample_f(outlet, data);
 
-        if(cv::waitKey(5) >= 0)
+        //press q to quit
+        if(cv::waitKey(1) == 'q')
             break;
     }
 
