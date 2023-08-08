@@ -1,7 +1,7 @@
 #include "camera.hpp"
 #include "multi_camera.hpp"
 #include <iostream>
-#include <lsl_c.h>
+#include <lsl_cpp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -130,20 +130,25 @@ main(int argc, char **argv)
         cameras.get_cam(j)->set_wrap("wrap" + std::to_string(j) + ".xml");
     }
 
-    int nb_ch = 3 * n;
+    int nb_ch = 4 * n;
     float data[nb_ch];
-    lsl_streaminfo info = lsl_create_streaminfo("positions", "positions", nb_ch,
-                                                0, cft_float32, "camerasuid");
-    lsl_outlet outlet = lsl_create_outlet(info, 0, 360);
+
+    lsl::stream_info info("positions", "positions", nb_ch, 0, lsl::cf_float32,
+                          "camerasuid");
+    lsl::stream_outlet outlet(info);
+
+    //compute the time beetwen 2 frames
     for(;;)
     {
-        std::cout << "\xd                                                      "
-                     "                       \xd";
+        uint64_t t_s = time(NULL);
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &ts);
+        uint32_t t_ns = ts.tv_nsec;
         for(int j = 0; j < n; j++)
         {
             frame[j] = cameras.getFrame(j, true);
             std::vector<cv::KeyPoint> keypoints;
-            keypoints.push_back(cv::KeyPoint(-1, -1, 20));
+            //keypoints.push_back(cv::KeyPoint(-1, -1, 20));
             get_keypoints(frame[j], keypoints);
 
             cv::Mat im_with_keypoints;
@@ -158,7 +163,6 @@ main(int argc, char **argv)
                 double dx = keypoints[0].pt.x - keypoints[1].pt.x;
                 double dy = keypoints[0].pt.y - keypoints[1].pt.y;
                 double dist = sqrt(dx * dx + dy * dy);
-                double angle = atan2(dy, dx) * 180 / M_PI;
                 if(dist < 60)
                 {
                     //send to client
@@ -166,16 +170,19 @@ main(int argc, char **argv)
                                   (frame[j].cols - border * 2);
                     data[j * 2 + 1] = (keypoints[0].pt.y - border) /
                                       (frame[j].rows - border * 2);
-                    //print with 3 decimals
-                    std::cout << std::fixed << std::setprecision(3);
-                    std::cout << data[j * 2] << "\t\t" << data[j * 2 + 1]
-                              << "\t\t" << angle << "\t\t" << dist << std::endl;
+                    data[j * 2 + 2] = (keypoints[1].pt.x - border) /
+                                      (frame[j].cols - border * 2);
+                    data[j * 2 + 3] = (keypoints[1].pt.y - border) /
+                                      (frame[j].rows - border * 2);
+                    printf("\xd%lf (%0.3f , %0.3f) (%0.3f , %0.3f)", t_s+t_ns/1e9,
+                           data[j * 2], data[j * 2 + 1], data[j * 2 + 2],
+                           data[j * 2 + 3]);
+                    fflush(stdout);
                 }
             }
         }
         cv::imshow(win_name, inverted);
-        std::cout << std::flush;
-        lsl_push_sample_f(outlet, data);
+        outlet.push_sample(data, t_s+t_ns/1e9);
 
         //press q to quit
         if(cv::waitKey(1) == 'q')
