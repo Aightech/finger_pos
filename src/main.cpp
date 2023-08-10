@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+//file io
+#include <fstream>
+#include <sstream>
+#include <iterator>
 //setprecision
 #include <iomanip>
 
@@ -76,6 +80,28 @@ get_keypoints(Mat &frame, std::vector<cv::KeyPoint> &keypoints)
 int
 main(int argc, char **argv)
 {
+    //check if there is a calibration file
+    std::ifstream file("calibration.txt", std::ios::in);
+    if(file.good())
+    {
+        std::cout << "Calibration file found" << std::endl;
+        std::string line;
+        std::getline(file, line);
+        std::istringstream iss(line);
+        std::vector<std::string> results(std::istream_iterator<std::string>{iss},
+                                         std::istream_iterator<std::string>());
+        low_H = std::stoi(results[0]);
+        high_H = std::stoi(results[1]);
+        low_S = std::stoi(results[2]);
+        high_S = std::stoi(results[3]);
+        low_V = std::stoi(results[4]);
+        high_V = std::stoi(results[5]);
+        dilate_size = std::stoi(results[6]);
+    }
+    else
+        std::cout << "Calibration file not found" << std::endl;
+
+
     namedWindow(win_name);
     // Trackbars to set thresholds for HSV values
     createTrackbar("Low H", win_name, &low_H, max_value_H,
@@ -188,6 +214,12 @@ main(int argc, char **argv)
         if(cv::waitKey(1) == 'q')
             break;
     }
+    //save the color calibration values in a file for later use
+    //open the file
+    std::ofstream fileOut("calibration.txt");
+    //write the values
+    fileOut << low_H << " " << high_H << " " << low_S << " " << high_S << " "
+         << low_V << " " << high_V << " " << dilate_size << std::endl;
 
     return 0;
 }
