@@ -7,8 +7,8 @@
 #include <time.h>
 //file io
 #include <fstream>
-#include <sstream>
 #include <iterator>
+#include <sstream>
 //setprecision
 #include <iomanip>
 
@@ -88,8 +88,9 @@ main(int argc, char **argv)
         std::string line;
         std::getline(file, line);
         std::istringstream iss(line);
-        std::vector<std::string> results(std::istream_iterator<std::string>{iss},
-                                         std::istream_iterator<std::string>());
+        std::vector<std::string> results(
+            std::istream_iterator<std::string>{iss},
+            std::istream_iterator<std::string>());
         low_H = std::stoi(results[0]);
         high_H = std::stoi(results[1]);
         low_S = std::stoi(results[2]);
@@ -100,7 +101,6 @@ main(int argc, char **argv)
     }
     else
         std::cout << "Calibration file not found" << std::endl;
-
 
     namedWindow(win_name);
     // Trackbars to set thresholds for HSV values
@@ -200,15 +200,16 @@ main(int argc, char **argv)
                                       (frame[j].cols - border * 2);
                     data[j * 2 + 3] = (keypoints[1].pt.y - border) /
                                       (frame[j].rows - border * 2);
-                    printf("\xd%lf (%0.3f , %0.3f) (%0.3f , %0.3f)", t_s+t_ns/1e9,
-                           data[j * 2], data[j * 2 + 1], data[j * 2 + 2],
-                           data[j * 2 + 3]);
+                    printf("\xd%lf (%0.3f , %0.3f) (%0.3f , %0.3f)",
+                           t_s + t_ns / 1e9, data[j * 2], data[j * 2 + 1],
+                           data[j * 2 + 2], data[j * 2 + 3]);
                     fflush(stdout);
+
+                    outlet.push_sample(data, t_s + t_ns / 1e9);
                 }
             }
         }
         cv::imshow(win_name, inverted);
-        outlet.push_sample(data, t_s+t_ns/1e9);
 
         //press q to quit
         if(cv::waitKey(1) == 'q')
@@ -219,7 +220,7 @@ main(int argc, char **argv)
     std::ofstream fileOut("calibration.txt");
     //write the values
     fileOut << low_H << " " << high_H << " " << low_S << " " << high_S << " "
-         << low_V << " " << high_V << " " << dilate_size << std::endl;
+            << low_V << " " << high_V << " " << dilate_size << std::endl;
 
     return 0;
 }
