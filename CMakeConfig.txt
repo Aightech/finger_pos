@@ -1,5 +1,5 @@
 set(EXEC_NAME finger_pos)
-set(PROJECT_VERSION 1.11)
+set(PROJECT_VERSION 1.12)
 
 ###### Special libraries ######
 set(EXTRA_LIBS "")
