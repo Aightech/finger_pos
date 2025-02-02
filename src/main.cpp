@@ -139,7 +139,7 @@ main(int argc, char **argv)
         return 0;
     }
 
-    MultiCam cameras(2);
+    MultiCam cameras(3);
     int n = argc - 1;
     std::cout << "Number of cameras: " << n << std::endl;
     int width = 3264;
@@ -148,10 +148,14 @@ main(int argc, char **argv)
     cv::Mat frame[n];
 
     for(int i = 0; i < n; i++)
-        cameras.addCamera(atoi(argv[i + 1]), width, height);
+        {
+            std::cout << "[MAIN] Adding camera " << i << std::endl;
+            cameras.addCamera(atoi(argv[i + 1]), width, height);
+        }
 
     for(int j = 0; j < n; j++)
     {
+        std::cout << "[MAIN] Setting camera " << j << " resolution" << std::endl;
         cameras.get_cam(j)->set_resolution(640, 480);
         cameras.get_cam(j)->set_wrap("wrap" + std::to_string(j) + ".xml");
     }
@@ -164,6 +168,8 @@ main(int argc, char **argv)
     lsl::stream_outlet outlet(info);
 
     //compute the time beetwen 2 frames
+    std::cout << "### Starting main loop ###" << std::endl;
+    std::cout << "Press 'q' to quit" << std::endl;
     for(;;)
     {
         uint64_t t_s = time(NULL);
