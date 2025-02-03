@@ -206,12 +206,13 @@ main(int argc, char **argv)
                                       (frame[j].cols - border * 2);
                     data[j * 2 + 3] = (keypoints[1].pt.y - border) /
                                       (frame[j].rows - border * 2);
-                    printf("\xd%lf (%0.3f , %0.3f) (%0.3f , %0.3f)",
-                           t_s + t_ns / 1e9, data[j * 2], data[j * 2 + 1],
+                    double ts = t_s + t_ns / 1e9;
+                    printf("\xd%lf (%0.3f , %0.3f) (%0.3f , %0.3f)\n",
+                           ts, data[j * 2], data[j * 2 + 1],
                            data[j * 2 + 2], data[j * 2 + 3]);
                     fflush(stdout);
 
-                    outlet.push_sample(data, t_s + t_ns / 1e9);
+                    outlet.push_sample(data, ts);
                 }
             }
         }
